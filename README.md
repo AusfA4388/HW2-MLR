@@ -2,7 +2,7 @@
 
 **侯佳旻 7114056115**｜物聯網數據分析與應用
 
-🔗 **網頁 Demo**：https://你的帳號.github.io/你的repo名稱/ （← 部署後改成實際網址）
+🔗 **網頁 Demo**：https://ausfa4388.github.io/HW2-MLR/
 
 以 Kaggle 上特徵數 > 13 的資料集，依 CRISP-DM 流程完成多元線性回歸分析：特徵選擇、模型評估、含 95% 信賴區間 / 預測區間的預測圖。整個分析以純 JavaScript 在瀏覽器即時計算，部署於 GitHub Pages。
 
