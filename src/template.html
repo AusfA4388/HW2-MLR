@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HW2 · Multiple Linear Regression</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1d2433;--mute:#5d6678;--line:#e2e5ec;--accent:#2457c5;--accent-soft:#e8eefb;--ok:#1a7f4b;--warn:#a15c00;--warn-soft:#fff4e0;--pi:rgba(36,87,197,.12);--ci:rgba(36,87,197,.30)}
+@media (prefers-color-scheme:dark){:root{--bg:#12151c;--card:#1b2029;--ink:#e6e9ef;--mute:#9aa3b5;--line:#2c3340;--accent:#7aa2ff;--accent-soft:#232c40;--ok:#4cc38a;--warn:#f0b35a;--warn-soft:#2e2615;--pi:rgba(122,162,255,.13);--ci:rgba(122,162,255,.32)}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 -apple-system,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif}
+header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:12px 0}
+h1{font-size:19px;margin:0}
+h1 small{display:block;font-size:12.5px;color:var(--mute);font-weight:400}
+select,input,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:7px;padding:6px 10px}
+button{background:var(--accent);color:#fff;border:0;cursor:pointer;font-weight:600}
+button.ghost{background:var(--accent-soft);color:var(--accent)}
+#custom{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 0 12px}
+#custom input[type=url]{flex:1 1 360px;min-width:0}
+[hidden]{display:none!important}
+#status{font-size:13px;color:var(--mute);padding-bottom:10px}
+#status.ok{color:var(--ok)} #status.err{color:#c43b3b}
+nav{display:flex;gap:4px;overflow-x:auto;padding-bottom:8px;font-size:13px}
+nav a{color:var(--mute);text-decoration:none;padding:3px 9px;border-radius:99px;white-space:nowrap}
+nav a:hover{background:var(--accent-soft);color:var(--accent)}
+main{padding:20px 0 60px}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-bottom:18px;scroll-margin-top:140px}
+h2{font-size:18px;margin:0 0 12px;display:flex;gap:10px;align-items:baseline}
+h2 .n{font-size:12px;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:1px 8px;font-weight:700}
+h3{font-size:15px;margin:20px 0 8px}
+p{margin:6px 0}
+.mute{color:var(--mute)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12.5px;color:var(--mute)}
+.tbl{overflow-x:auto;margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:5px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--mute);font-weight:600;background:var(--bg)}
+tr.hl td{background:var(--accent-soft);font-weight:600}
+.sig{color:var(--ok);font-weight:700}
+.chart{position:relative;height:320px;margin:10px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}.chart{height:260px}}
+.eq{font-family:Consolas,Menlo,monospace;font-size:13px;background:var(--bg);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+.note{background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:6px;padding:10px 14px;margin:10px 0;font-size:14px}
+.warn{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:6px;padding:10px 14px;margin:10px 0;font-size:14px}
+.tag{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:2px 9px;margin-bottom:6px}
+.tag.gpt{background:#efe6ff;color:#5b2bb5}.tag.nlm{background:#e1f5ea;color:#13734a}
+@media (prefers-color-scheme:dark){.tag.gpt{background:#2e2446;color:#c9b2ff}.tag.nlm{background:#173328;color:#7fdcae}}
+.pred{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.pred label{font-size:13px;color:var(--mute);display:flex;flex-direction:column;gap:3px}
+.out{font-size:20px;margin-top:12px}
+.out b{color:var(--accent)}
+ol,ul{padding-left:22px;margin:6px 0}
+footer{color:var(--mute);font-size:12.5px;text-align:center;padding:10px 16px 40px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="top">
+    <h1>HW2 · 多元線性回歸 Multiple Linear Regression<small>CRISP-DM · 特徵選擇 · 預測區間 ｜ 侯佳旻 7114056115 ｜ 物聯網數據分析與應用</small></h1>
+    <select id="problem" aria-label="選擇 Problem">
+      <option value="life">Problem 1 · Life Expectancy (WHO)</option>
+      <option value="car">Problem 2 · Car Price</option>
+      <option value="custom">自訂 Dataset（任意 CSV）</option>
+    </select>
+  </div>
+  <div id="custom" hidden>
+    <input type="url" id="url" value="https://raw.githubusercontent.com/Avik-Jain/100-Days-Of-ML-Code/master/datasets/50_Startups.csv" aria-label="CSV 網址">
+    <button class="ghost" id="loadUrl">載入 URL</button>
+    <label class="mute" style="font-size:13px">或上傳 <input type="file" id="file" accept=".csv,text/csv"></label>
+    <span id="tsel" hidden>Target <select id="target"></select>
+      <label style="font-size:13px"><input type="checkbox" id="logT"> log(target)</label>
+      <button id="runBtn">執行分析</button></span>
+  </div>
+  <div id="status">載入中…</div>
+  <nav><a href="#s1">1 Business</a><a href="#s2">2 Data</a><a href="#s3">3 Preparation</a><a href="#s4">4 Modeling</a><a href="#s5">5 Evaluation</a><a href="#s6">6 Deployment</a><a href="#s7">AI 輔助</a></nav>
+</div></header>
+
+<main class="wrap">
+<section id="s1"><h2><span class="n">1</span>Business Understanding</h2><div id="biz"></div></section>
+
+<section id="s2"><h2><span class="n">2</span>Data Understanding</h2>
+  <div class="kpis" id="kpis"></div>
+  <h3>欄位一覽</h3><div class="tbl" id="colTable"></div>
+  <div class="grid2">
+    <div><h3>Target 分布</h3><div class="chart"><canvas id="cHist"></canvas></div></div>
+    <div><h3>與 Target 的相關係數（|r| 前 15 名）</h3><div class="chart"><canvas id="cCorr"></canvas></div></div>
+  </div>
+</section>
+
+<section id="s3"><h2><span class="n">3</span>Data Preparation</h2><div id="prep"></div></section>
+
+<section id="s4"><h2><span class="n">4</span>Modeling：特徵選擇 + OLS</h2>
+  <p>四種方法各自產生特徵的<b>排序</b>，再依序取前 k 個特徵用 OLS 擬合。k 的選擇只用<b>訓練集 5-fold CV RMSE</b>，並採用 <b>1-SE rule</b>：選「CV RMSE 不超過最小值 + 1 個標準誤」中最小的 k，用較少的特徵換取幾乎相同的表現。測試集完全不參與選擇，只用來報告最終成績。</p>
+  <div class="chart" style="height:340px"><canvas id="cCurve"></canvas></div>
+  <div class="tbl" id="methodTable"></div>
+  <div id="chosen"></div>
+  <h3>回歸方程式</h3><div class="eq" id="eq"></div>
+  <h3>係數表（訓練集 OLS）</h3><div class="tbl" id="coefTable"></div>
+  <p class="mute" style="font-size:13px">p &lt; 0.05 以綠色標示。VIF &gt; 10 代表嚴重共線性，5～10 為中度。</p>
+</section>
+
+<section id="s5"><h2><span class="n">5</span>Evaluation</h2>
+  <div class="tbl" id="metricTable"></div>
+  <h3>預測圖：測試集 + 95% 信賴區間 / 預測區間</h3>
+  <p class="mute" style="font-size:13.5px">橫軸是測試樣本（依預測值排序）。深色帶為 <b>95% 信賴區間 (CI)</b>：平均反應的不確定性；淺色帶為 <b>95% 預測區間 (PI)</b>：單一新樣本的不確定性，所以一定比 CI 寬。</p>
+  <div class="chart" style="height:360px"><canvas id="cPI"></canvas></div>
+  <div id="coverage"></div>
+  <h3 id="partialTitle">單一特徵偏效應圖（其他特徵固定在平均值）</h3>
+  <div class="chart"><canvas id="cPartial"></canvas></div>
+  <div class="grid2">
+    <div><h3>Actual vs Predicted（測試集）</h3><div class="chart"><canvas id="cAvP"></canvas></div></div>
+    <div><h3>殘差 vs 擬合值（訓練集）</h3><div class="chart"><canvas id="cRes"></canvas></div></div>
+  </div>
+  <div class="grid2">
+    <div><h3>殘差 Normal Q-Q Plot</h3><div class="chart"><canvas id="cQQ"></canvas></div></div>
+    <div><h3>判讀</h3><div id="diag"></div></div>
+  </div>
+</section>
+
+<section id="s6"><h2><span class="n">6</span>Deployment：即時預測器</h2>
+  <p>輸入選入模型的特徵值，即時得到預測值與 95% 預測區間。預設值為訓練集平均（類別欄位為基準類別）。</p>
+  <div class="pred" id="predForm"></div>
+  <div class="out" id="predOut"></div>
+  <div id="deployNote"></div>
+</section>
+
+<section id="s7"><h2><span class="n">AI</span>AI 協助說明</h2>
+  <span class="tag gpt">GPT 輔助內容</span>
+  <p>本作業的 AI 輔助工具為 <b>Claude（Anthropic）</b>，對話紀錄已匯出為 PDF，放在 GitHub repo 的 <code>ai_logs/</code>。AI 協助的部分：</p>
+  <ul>
+    <li>資料集挑選：比較多個 Kaggle 資料集，排除特徵數不足（Boston Housing 只有 13 個）或合成資料（Predict the Flood）的選項。</li>
+    <li>方法設計：以 5-fold CV + 1-SE rule 選 k，避免用測試集挑模型造成資訊洩漏；Car Price 採用 log(price) 改善殘差異質性。</li>
+    <li>程式實作：OLS、t/F 檢定、VIF、CI/PI、Lasso/ElasticNet 座標下降皆以 JavaScript 實作，並與 Python statsmodels 對照驗證，係數與區間誤差小於 1e-12。</li>
+    <li>本頁的文字說明初稿；分析結果與判讀由本人確認。</li>
+  </ul>
+  <span class="tag nlm" style="margin-top:14px">NotebookLM 摘要</span>
+  <div id="nlm">
+    <!-- ✏️ 把 NotebookLM 摘要（100 字以上）貼在下面這個 <p> 裡，並把 class="warn" 拿掉 -->
+    <p class="warn">（待補：請貼上 NotebookLM 對網路上同主題解法的研究摘要，100 字以上）</p>
+  </div>
+</section>
+</main>
+<footer>侯佳旻 7114056115 ｜ 本頁所有計算皆在瀏覽器中即時完成（純 JavaScript，無後端）｜ AI 使用聲明：本作業使用 Claude 協助開發，詳見「AI 協助說明」</footer>
+
+<script>
+/*__CORE__*/
+</script>
+<script>
+/*__DATA__*/
+const PROBLEMS = {
+  life: { csv: () => LIFE_CSV, target: 'Life expectancy', log: false, title: 'Life Expectancy (WHO)',
+    src: '<a href="https://www.kaggle.com/datasets/kumarajarshi/life-expectancy-who" target="_blank">Kaggle · Life Expectancy (WHO) by KumarRajarshi</a>',
+    raw: 'https://raw.githubusercontent.com/Vipul97/life-expectancy-prediction/master/Life%20Expectancy%20Data.csv',
+    biz: `<p><b>背景：</b>WHO 的 Global Health Observatory 與聯合國整理了 193 個國家 2000–2015 年的健康、經濟與社會指標。衛生政策單位想知道：<b>哪些可量化的因素最能解釋一個國家的平均壽命？</b></p>
+      <p><b>目標：</b>以多元線性回歸預測 <code>Life expectancy</code>（年），並找出影響最大的少數關鍵因素，作為資源分配（疫苗接種、HIV 防治、教育投資）的參考。</p>
+      <p><b>成功標準：</b>測試集 R² ≥ 0.8，且模型精簡（遠少於全部 20 個特徵）、係數可解釋。</p>` },
+  car: { csv: () => CAR_CSV, target: 'price', log: true, title: 'Car Price Prediction',
+    src: '<a href="https://www.kaggle.com/datasets/hellbuoy/car-price-prediction" target="_blank">Kaggle · Car Price Prediction (Multiple Linear Regression) by hellbuoy</a>',
+    raw: 'https://raw.githubusercontent.com/SampattKumar/Linear-Regression-Car-Dataset/master/CarPrice_Assignment.csv',
+    biz: `<p><b>背景：</b>一家中國車廠想進入美國市場，需要了解美國市場上<b>哪些車輛規格會影響售價</b>，以調整車款設計與定價策略。</p>
+      <p><b>目標：</b>以 205 款車的 24 項規格（引擎、車身、尺寸、油耗等）預測 <code>price</code>（美元）。價格呈右偏且變異隨價格增加，因此對 <b>log(price)</b> 建模，報告時轉回美元。</p>
+      <p><b>成功標準：</b>測試集 R² ≥ 0.85，且能指出少數關鍵規格。</p>` }
+};
+
+const $ = id => document.getElementById(id);
+const fmt = (v, d = 3) => { if (!isFinite(v)) return '–'; const a = Math.abs(v); if (a !== 0 && (a >= 1e6 || a < 1e-3)) return v.toExponential(2); return v.toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: a >= 1000 ? 0 : Math.min(d, 2) }); };
+const pfmt = p => p < 1e-4 ? '<0.0001' : p.toFixed(4);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const charts = {};
+function chart(id, cfg) { charts[id]?.destroy(); cfg.options = Object.assign({ responsive: true, maintainAspectRatio: false, animation: false, plugins: {} }, cfg.options); charts[id] = new Chart($(id), cfg); }
+function status(msg, cls = '') { $('status').textContent = msg; $('status').className = cls; }
+
+let current = null; // {csv, cols, D, R, meta}
+
+function analyze(csv, target, logT, meta) {
+  const cols = MLR.describeColumns(csv);
+  const D = MLR.buildDesign(csv, cols, target, logT);
+  if (D.featNames.length < 1) throw new Error('沒有可用的特徵欄位');
+  if (D.featNames.length > 80) throw new Error(`編碼後有 ${D.featNames.length} 個特徵，超過網頁版上限 80`);
+  const R = MLR.run(D, { logTarget: logT });
+  current = { csv, cols, D, R, meta, target };
+  render();
+}
+
+function render() {
+  const { cols, D, R, meta, target } = current, M = R.model, tName = esc(target), yLab = R.log ? `log(${tName})` : tName;
+  const ink = css('--ink'), mute = css('--mute'), line = css('--line'), acc = css('--accent');
+  Chart.defaults.color = mute; Chart.defaults.borderColor = line; Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  const palette = ['#2457c5', '#d9480f', '#2b8a3e', '#9c36b5'];
+
+  // 1 Business
+  $('biz').innerHTML = (meta.biz || `<p><b>自訂資料集：</b>以多元線性回歸預測 <code>${tName}</code>，並找出最具解釋力的特徵組合。</p>`) +
+    `<p class="mute" style="font-size:13.5px"><b>資料來源：</b>${meta.src || esc(meta.url || '使用者上傳檔案')}${meta.raw ? `<br>網頁內嵌的 CSV 取自 <a href="${meta.raw}" target="_blank">GitHub 鏡像</a>（與 Kaggle 原始檔相同）` : ''}</p>`;
+
+  // 2 Data understanding
+  const nNum = cols.filter(c => c.kind === 'numeric' && c.name !== target).length, nCat = cols.filter(c => c.kind === 'categorical' && c.name !== target).length, nDrop = cols.filter(c => c.kind === 'dropped').length;
+  $('kpis').innerHTML = [[D.n0.toLocaleString(), '原始筆數'], [cols.length - 1, '原始特徵數（不含 target）'], [`${nNum} / ${nCat}`, '數值 / 類別特徵'], [D.featNames.length, 'One-hot 後特徵數'], [R.n.toLocaleString(), '有效筆數（刪除缺值後）']]
+    .map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join('');
+  $('colTable').innerHTML = `<table><tr><th>欄位</th><th>型別</th><th>缺值</th><th>說明</th></tr>${cols.map(c => `<tr${c.name === target ? ' class="hl"' : ''}><td>${esc(c.name)}</td><td>${c.name === target ? 'Target' : { numeric: '數值', categorical: '類別', dropped: '排除' }[c.kind]}</td><td>${c.missing ? `${c.missing}（${(c.missing / D.n0 * 100).toFixed(1)}%）` : 0}</td><td style="text-align:left">${c.kind === 'dropped' ? esc(c.reason) : c.kind === 'categorical' ? `${c.levels.length} 類：${esc(c.levels.slice(0, 6).join(', '))}${c.levels.length > 6 ? '…' : ''}` : ''}</td></tr>`).join('')}</table>`;
+  // histogram
+  const ys = D.y, lo = Math.min(...ys), hi = Math.max(...ys), B = 24, w = (hi - lo) / B || 1, bins = Array(B).fill(0); ys.forEach(v => bins[Math.min(B - 1, Math.floor((v - lo) / w))]++);
+  chart('cHist', { type: 'bar', data: { labels: bins.map((_, i) => fmt(lo + w * (i + .5), 1)), datasets: [{ data: bins, backgroundColor: acc, barPercentage: 1, categoryPercentage: .95 }] }, options: { plugins: { legend: { display: false } }, scales: { x: { title: { display: true, text: tName } }, y: { title: { display: true, text: '筆數' } } } } });
+  // correlations
+  const ym = MLR.mean(ys), corr = D.featNames.map((nm, j) => { const xs = D.X.map(x => x[j]), xm = MLR.mean(xs); let a = 0, b = 0, c = 0; xs.forEach((x, i) => { a += (x - xm) * (ys[i] - ym); b += (x - xm) ** 2; c += (ys[i] - ym) ** 2; }); return { nm, r: a / Math.sqrt(b * c) }; }).sort((a, b) => Math.abs(b.r) - Math.abs(a.r)).slice(0, 15);
+  chart('cCorr', { type: 'bar', data: { labels: corr.map(c => c.nm), datasets: [{ data: corr.map(c => c.r), backgroundColor: corr.map(c => c.r > 0 ? acc : '#d9480f') }] }, options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { min: -1, max: 1, title: { display: true, text: 'Pearson r' } }, y: { ticks: { autoSkip: false, font: { size: 11 } } } } } });
+
+  // 3 Preparation
+  const dropped = cols.filter(c => c.kind === 'dropped');
+  $('prep').innerHTML = `<ol>
+    <li><b>欄位清理：</b>去除欄名前後空白。${dropped.length ? `排除 ${dropped.map(c => `<code>${esc(c.name)}</code>（${esc(c.reason)}）`).join('、')}。` : '沒有需要排除的欄位。'}</li>
+    <li><b>缺值處理：</b>任何使用欄位有缺值的列整列刪除（listwise deletion），${D.n0.toLocaleString()} → ${R.n.toLocaleString()} 筆（刪除 ${D.dropped.toLocaleString()} 筆）。${D.dropped / D.n0 > 0.3 ? '<br><span class="mute">刪除比例偏高，但補值會替不同國家的資料引入人為假設；以完整觀測建模較能保證係數與區間的正確性。</span>' : ''}</li>
+    <li><b>類別編碼：</b>${cols.some(c => c.kind === 'categorical' && c.name !== target) ? `類別欄位做 one-hot（drop first，避免與截距完全共線），共得 ${D.featNames.length} 個特徵。` : '沒有類別欄位。'}</li>
+    <li><b>Target 轉換：</b>${R.log ? `對 <code>${tName}</code> 取自然對數建模，預測時再以 exp 轉回原單位（區間轉回後會不對稱）。` : '不轉換。'}</li>
+    <li><b>切分：</b>隨機 80/20（seed = 42）→ 訓練集 ${R.train.length} 筆、測試集 ${R.test.length} 筆。特徵排序、k 的選擇、標準化參數都<b>只用訓練集</b>計算。</li>
+  </ol>${meta.key === 'life' ? '<div class="warn"><b>限制：</b>同一個國家有多個年份的資料，隨機切分時同一國家可能同時出現在訓練集與測試集，測試成績會略為樂觀。較嚴謹的做法是依國家分組切分（GroupKFold）。</div>' : ''}`;
+
+  // 4 Modeling
+  const ks = R.curves.forward.map(r => r.k);
+  chart('cCurve', { type: 'line', data: { labels: ks, datasets: MLR.METHODS.map((m, i) => ({ label: m.name, data: R.curves[m.id].map(r => r.cv), borderColor: palette[i], backgroundColor: palette[i], pointRadius: ks.map(k => k === R.picks[m.id].oneSE ? 6 : 0), borderWidth: m.id === R.bestMethod ? 3 : 1.5 })) },
+    options: { interaction: { mode: 'index', intersect: false }, plugins: { title: { display: true, text: `5-fold CV RMSE vs 特徵數 k（${R.log ? 'log 尺度' : tName + ' 單位'}；圓點 = 1-SE rule 選出的 k）` } }, scales: { x: { title: { display: true, text: 'k（特徵數）' } }, y: { title: { display: true, text: 'CV RMSE' } } } } });
+  const tu = R.log ? `（${tName}）` : '';
+  $('methodTable').innerHTML = `<table><tr><th>方法</th><th>CV 最小的 k</th><th>1-SE rule 的 k</th><th>CV RMSE${R.log ? '（log）' : ''}</th><th>Test RMSE${tu}</th><th>Test R²</th></tr>${MLR.METHODS.map(m => { const p = R.picks[m.id]; return `<tr${m.id === R.bestMethod ? ' class="hl"' : ''}><td>${m.name}${m.id === R.bestMethod ? ' ✓' : ''}</td><td>${p.min}</td><td>${p.oneSE}</td><td>${fmt(p.row.cv, 4)}</td><td>${fmt(p.row.testRmse)}</td><td>${p.row.testR2.toFixed(4)}</td></tr>`; }).join('')}</table>`;
+  const mName = MLR.METHODS.find(m => m.id === R.bestMethod).name;
+  $('chosen').innerHTML = `<div class="note"><b>最終模型：</b>${mName}，k = ${R.kSel}（四種方法在 1-SE 選擇下 CV RMSE 最低）。選入特徵依重要性排序：${R.sel.map(j => `<code>${esc(D.featNames[j])}</code>`).join('、')}。<br>被排除的 ${R.p - R.kSel} 個特徵：${R.p - R.kSel ? R.rankings[R.bestMethod].slice(R.kSel).map(j => esc(D.featNames[j])).join('、') : '無'}。</div>`;
+  $('eq').textContent = `${R.log ? 'log(' + target + ')' : target} = ${fmt(M.b[0], 4)}\n` + M.coef.slice(1).map(c => `   ${c.b < 0 ? '−' : '+'} ${fmt(Math.abs(c.b), 4)} × ${c.name}`).join('\n');
+  $('coefTable').innerHTML = `<table><tr><th>變數</th><th>係數</th><th>標準誤</th><th>t</th><th>p-value</th><th>95% CI</th><th>VIF</th></tr>${M.coef.map((c, a) => `<tr><td>${esc(c.name)}</td><td>${fmt(c.b, 4)}</td><td>${fmt(c.se, 4)}</td><td>${c.t.toFixed(2)}</td><td class="${c.p < .05 ? 'sig' : ''}">${pfmt(c.p)}</td><td>[${fmt(c.lo, 4)}, ${fmt(c.hi, 4)}]</td><td>${a ? `<span style="${M.vif[a - 1] > 10 ? 'color:#c43b3b;font-weight:700' : ''}">${M.vif[a - 1].toFixed(2)}</span>` : ''}</td></tr>`).join('')}</table>
+    <p class="mute" style="font-size:13px">${R.log ? '（以下為 log 尺度）' : ''}R² = ${M.r2.toFixed(4)}，Adj R² = ${M.adj.toFixed(4)}，F(${M.k}, ${M.df}) = ${fmt(M.F, 2)}，p ${M.Fp < 1e-4 ? '< 0.0001' : '= ' + M.Fp.toFixed(4)}，殘差標準誤 σ̂ = ${fmt(M.sigma, 4)}${R.log ? '（log 尺度）' : ''}</p>`;
+
+  // 5 Evaluation
+  const E = R.evalSel, F = R.evalFull, row = (n, m) => `<td>${fmt(m.rmse)}</td><td>${fmt(m.mae)}</td><td>${m.r2.toFixed(4)}</td><td>${isFinite(m.adj) ? m.adj.toFixed(4) : '–'}</td>`;
+  $('metricTable').innerHTML = `<table><tr><th>模型</th><th>特徵數</th><th>集合</th><th>RMSE</th><th>MAE</th><th>R²</th><th>Adj R²</th></tr>
+    <tr><td>全特徵 OLS（baseline）</td><td>${R.full.k}</td><td>Train</td>${row(0, F.train)}</tr><tr><td></td><td></td><td>Test</td>${row(0, F.test)}</tr>
+    <tr class="hl"><td>選擇後模型</td><td>${R.kSel}</td><td>Train</td>${row(0, E.train)}</tr><tr class="hl"><td></td><td></td><td>Test</td>${row(0, E.test)}</tr></table>
+    <p class="mute" style="font-size:13px">指標皆以原始單位（${tName}）計算${R.log ? '，所以和上方 log 尺度的 R² 不同' : ''}。${!isFinite(F.test.adj) ? '測試集筆數少於特徵數 + 1 時 Adj R² 無定義，以「–」表示。' : ''}</p>`;
+  const tp = R.testPred.slice().sort((a, b) => a.fit - b.fit), xi = tp.map((_, i) => i + 1);
+  const band = (lo, hi, col, lab) => [{ label: lab, data: tp.map((r, i) => ({ x: i + 1, y: r[hi] })), borderWidth: 0, pointRadius: 0, backgroundColor: col, fill: '+1' }, { label: '_', data: tp.map((r, i) => ({ x: i + 1, y: r[lo] })), borderWidth: 0, pointRadius: 0 }];
+  chart('cPI', { type: 'line', data: { datasets: [...band('piLo', 'piHi', css('--pi'), '95% 預測區間 (PI)'), ...band('ciLo', 'ciHi', css('--ci'), '95% 信賴區間 (CI)'),
+    { label: '預測值', data: tp.map((r, i) => ({ x: i + 1, y: r.fit })), borderColor: acc, borderWidth: 2, pointRadius: 0 },
+    { label: '實際值', type: 'scatter', data: tp.map((r, i) => ({ x: i + 1, y: r.y })), backgroundColor: tp.map(r => r.y < r.piLo || r.y > r.piHi ? '#d9480f' : ink), pointRadius: 2.6 }] },
+    options: { parsing: false, plugins: { legend: { labels: { filter: l => l.text !== '_' } }, tooltip: { filter: i => i.dataset.label !== '_' } }, scales: { x: { type: 'linear', title: { display: true, text: '測試樣本（依預測值排序）' } }, y: { title: { display: true, text: tName } } } } });
+  $('coverage').innerHTML = `<div class="note">測試集 ${R.test.length} 筆中有 <b>${(R.coverage * 100).toFixed(1)}%</b> 的實際值落在 95% 預測區間內（橘色點為區間外）。${Math.abs(R.coverage - .95) <= .04 ? '接近理論值 95%，代表區間寬度估計合理。' : R.coverage < .95 ? '略低於 95%，代表殘差有異質變異或厚尾，區間對部分樣本偏窄。' : '高於 95%，區間略保守。'}</div>`;
+  // partial effect on the most significant numeric feature
+  const numSel = M.coef.slice(1).map((c, a) => ({ c, j: R.sel[a] })).filter(o => D.featSrc[o.j].kind === 'num').sort((a, b) => Math.abs(b.c.t) - Math.abs(a.c.t))[0];
+  if (numSel) {
+    const j = numSel.j, xs = R.train.map(i => D.X[i][j]), mn = Math.min(...xs), mx = Math.max(...xs), G = 60, pts = [];
+    for (let g = 0; g <= G; g++) { const x = R.trainMeans.slice(); x[j] = mn + (mx - mn) * g / G; const q = M.predict(x); pts.push({ x: x[j], fit: R.inv(q.fit), ciLo: R.inv(q.fit - q.ci), ciHi: R.inv(q.fit + q.ci), piLo: R.inv(q.fit - q.pi), piHi: R.inv(q.fit + q.pi) }); }
+    const b2 = (lo, hi, col, lab) => [{ label: lab, data: pts.map(p => ({ x: p.x, y: p[hi] })), borderWidth: 0, pointRadius: 0, backgroundColor: col, fill: '+1' }, { label: '_', data: pts.map(p => ({ x: p.x, y: p[lo] })), borderWidth: 0, pointRadius: 0 }];
+    $('partialTitle').textContent = `單一特徵偏效應圖：${D.featNames[j]}（其他特徵固定在訓練集平均值）`;
+    chart('cPartial', { type: 'line', data: { datasets: [{ label: '原始資料點（未控制其他特徵，僅供參考）', type: 'scatter', data: R.train.map(i => ({ x: D.X[i][j], y: D.y[i] })), backgroundColor: 'rgba(120,130,150,.25)', pointRadius: 1.8 }, ...b2('piLo', 'piHi', css('--pi'), '95% PI'), ...b2('ciLo', 'ciHi', css('--ci'), '95% CI'), { label: '回歸線', data: pts.map(p => ({ x: p.x, y: p.fit })), borderColor: acc, borderWidth: 2.5, pointRadius: 0 }] },
+      options: { parsing: false, plugins: { legend: { labels: { filter: l => l.text !== '_' } }, tooltip: { filter: i => i.dataset.label !== '_' } }, scales: { x: { type: 'linear', title: { display: true, text: D.featNames[j] } }, y: { title: { display: true, text: tName } } } } });
+  } else { charts.cPartial?.destroy(); $('partialTitle').textContent = '單一特徵偏效應圖（選入特徵皆為類別，略過）'; }
+  const all = R.testPred.flatMap(r => [r.y, r.fit]), a0 = Math.min(...all), a1 = Math.max(...all);
+  chart('cAvP', { type: 'scatter', data: { datasets: [{ label: '測試樣本', data: R.testPred.map(r => ({ x: r.y, y: r.fit })), backgroundColor: acc, pointRadius: 3 }, { label: 'y = x', type: 'line', data: [{ x: a0, y: a0 }, { x: a1, y: a1 }], borderColor: '#d9480f', borderDash: [5, 4], pointRadius: 0, borderWidth: 1.5 }] }, options: { scales: { x: { title: { display: true, text: '實際值' } }, y: { title: { display: true, text: '預測值' } } } } });
+  chart('cRes', { type: 'scatter', data: { datasets: [{ label: '殘差', data: R.trainResid.map(r => ({ x: r.fit, y: r.res })), backgroundColor: acc, pointRadius: 2 }] }, options: { plugins: { legend: { display: false } }, scales: { x: { title: { display: true, text: `擬合值（${yLab}）` } }, y: { title: { display: true, text: '殘差' } } } } });
+  const rs = R.trainResid.map(r => r.res).sort((a, b) => a - b), rsd = MLR.sd(rs), N = rs.length, qq = rs.map((v, i) => ({ x: MLR.normInv((i + .5) / N), y: v / rsd }));
+  chart('cQQ', { type: 'scatter', data: { datasets: [{ label: '標準化殘差', data: qq, backgroundColor: acc, pointRadius: 2 }, { label: '常態參考線', type: 'line', data: [{ x: -3.5, y: -3.5 }, { x: 3.5, y: 3.5 }], borderColor: '#d9480f', borderDash: [5, 4], pointRadius: 0, borderWidth: 1.5 }] }, options: { scales: { x: { min: -4, max: 4, title: { display: true, text: '理論常態分位數' } }, y: { title: { display: true, text: '樣本分位數' } } } } });
+  const sk = rs.reduce((s, v) => s + (v / rsd) ** 3, 0) / N, ku = rs.reduce((s, v) => s + (v / rsd) ** 4, 0) / N - 3, maxV = Math.max(...M.vif);
+  const gap = E.train.r2 - E.test.r2, pairs = [];
+  for (let a = 0; a < R.sel.length; a++) for (let c = a + 1; c < R.sel.length; c++) { const u = R.train.map(i => D.X[i][R.sel[a]]), v = R.train.map(i => D.X[i][R.sel[c]]), um = MLR.mean(u), vm = MLR.mean(v); let s = 0, su = 0, sv = 0; u.forEach((x, i) => { s += (x - um) * (v[i] - vm); su += (x - um) ** 2; sv += (v[i] - vm) ** 2; }); const r = s / Math.sqrt(su * sv); if (Math.abs(r) > 0.9) pairs.push([D.featNames[R.sel[a]], D.featNames[R.sel[c]], r]); }
+  $('diag').innerHTML = `<ul>
+    <li><b>精簡度：</b>從 ${R.full.k} 個特徵減到 ${R.kSel} 個，Test R² ${F.test.r2.toFixed(3)} → ${E.test.r2.toFixed(3)}（${E.test.r2 >= F.test.r2 ? '不降反升' : '差 ' + (F.test.r2 - E.test.r2).toFixed(3)}）。</li>
+    <li><b>過擬合：</b>Train R² ${E.train.r2.toFixed(3)} vs Test R² ${E.test.r2.toFixed(3)}，差距 ${gap.toFixed(3)}${Math.abs(gap) < 0.05 ? '，沒有明顯過擬合' : '，有一定落差，測試集較小時波動也較大'}。</li>
+    <li><b>常態性：</b>殘差偏態 ${sk.toFixed(2)}、超額峰度 ${ku.toFixed(2)}${Math.abs(sk) < .5 && Math.abs(ku) < 1 ? '，接近常態' : '，Q-Q 圖尾端偏離，PI 對極端樣本可能偏窄'}。</li>
+    <li><b>共線性：</b>最大 VIF = ${maxV.toFixed(2)}${maxV > 10 ? '，有嚴重共線性，個別係數的解釋要小心' : maxV > 5 ? '，中度共線性' : '，共線性不嚴重'}。${pairs.map(([a, b, r]) => `<br><code>${esc(a)}</code> 與 <code>${esc(b)}</code> 相關係數 r = ${r.toFixed(3)}，幾乎是同一個資訊；兩者同時入模時係數會互相抵銷（常見一正一負），不能單獨解讀為「該變數增加會提高 / 降低 target」。預測仍然有效，但若要解釋係數，應只保留其中一個。`).join('')}</li>
+    <li><b>同質變異：</b>請看殘差圖是否呈漏斗狀${R.log ? '；取 log 後已明顯改善' : ''}。</li></ul>`;
+
+  // 6 Deployment
+  const groups = []; R.sel.forEach(j => { const s = D.featSrc[j]; let g = groups.find(g => g.col === s.col); if (!g) { g = { col: s.col, kind: s.kind, js: [], levels: s.kind === 'cat' ? cols.find(c => c.name === s.col).levels : null }; groups.push(g); } g.js.push(j); });
+  $('predForm').innerHTML = groups.map((g, gi) => g.kind === 'num' ? `<label>${esc(g.col)}<input type="number" step="any" data-g="${gi}" value="${+R.trainMeans[g.js[0]].toPrecision(5)}"></label>`
+    : `<label>${esc(g.col)}<select data-g="${gi}">${g.levels.map(l => `<option>${esc(l)}</option>`).join('')}</select></label>`).join('');
+  const doPred = () => { const x = R.trainMeans.slice(); $('predForm').querySelectorAll('[data-g]').forEach(el => { const g = groups[+el.dataset.g]; if (g.kind === 'num') x[g.js[0]] = +el.value; else g.js.forEach(j => x[j] = D.featSrc[j].level === el.value ? 1 : 0); });
+    const q = M.predict(x); $('predOut').innerHTML = `預測 ${tName} = <b>${fmt(R.inv(q.fit), 3)}</b><div class="mute" style="font-size:14px">95% 預測區間 [${fmt(R.inv(q.fit - q.pi), 3)}, ${fmt(R.inv(q.fit + q.pi), 3)}] ｜ 95% 平均反應 CI [${fmt(R.inv(q.fit - q.ci), 3)}, ${fmt(R.inv(q.fit + q.ci), 3)}]</div>`; };
+  $('predForm').oninput = doPred; doPred();
+  $('deployNote').innerHTML = `<p class="mute" style="font-size:13.5px">部署方式：整個分析（OLS、特徵選擇、區間估計）以純 JavaScript 在瀏覽器執行，部署於 GitHub Pages，不需後端伺服器。選「自訂 Dataset」可貼上任意 CSV 網址或上傳檔案重跑整套流程。</p>`;
+}
+
+function runPreset(key) {
+  const P = PROBLEMS[key]; status(`分析 ${P.title} 中…`);
+  setTimeout(() => { try { const t0 = performance.now(); analyze(MLR.parseCSV(P.csv()), P.target, P.log, { ...P, key }); status(`✓ ${P.title}：${current.R.n} 筆、${current.R.p} 個特徵，分析完成（${Math.round(performance.now() - t0)} ms）`, 'ok'); } catch (e) { status('✗ ' + e.message, 'err'); console.error(e); } }, 20);
+}
+let customCSV = null, customMeta = {};
+function loadCustom(text, meta) {
+  try { customCSV = MLR.parseCSV(text); customMeta = meta; const cols = MLR.describeColumns(customCSV), nums = cols.filter(c => c.kind === 'numeric');
+    if (!nums.length) throw new Error('找不到數值欄位可當 target');
+    $('target').innerHTML = nums.map(c => `<option>${esc(c.name)}</option>`).join(''); $('target').value = nums[nums.length - 1].name; $('tsel').hidden = false;
+    status(`✓ 已載入：${customCSV.rows.length} 筆、${cols.length} 欄。確認 target 後按「執行分析」`, 'ok'); runCustom();
+  } catch (e) { status('✗ 讀取失敗：' + e.message, 'err'); }
+}
+function runCustom() { if (!customCSV) return; status('分析中…'); setTimeout(() => { try { analyze(customCSV, $('target').value, $('logT').checked, customMeta); status(`✓ 自訂資料：${current.R.n} 筆、${current.R.p} 個特徵，target = ${$('target').value}`, 'ok'); } catch (e) { status('✗ ' + e.message, 'err'); console.error(e); } }, 20); }
+$('loadUrl').onclick = async () => { const url = $('url').value.trim(); status('下載中…');
+  try { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); loadCustom(await r.text(), { url, src: `<a href="${esc(url)}" target="_blank">${esc(url)}</a>` }); }
+  catch (e) { status(`✗ 無法下載：${e.message}。請確認是可直接下載的 CSV 網址（例如 raw.githubusercontent.com），Kaggle 頁面需要登入無法直接讀取。`, 'err'); } };
+$('file').onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => loadCustom(rd.result, { src: esc(f.name) + '（上傳檔案）' }); rd.readAsText(f); };
+$('runBtn').onclick = runCustom;
+$('problem').onchange = e => { const v = e.target.value; $('custom').hidden = v !== 'custom'; if (v === 'custom') { status(customCSV ? '自訂資料已載入，可直接執行分析' : '貼上 CSV 網址按「載入 URL」，或上傳 CSV 檔'); if (customCSV) runCustom(); } else runPreset(v); };
+runPreset('life');
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+const MLR=require('../src/core.js'),fs=require('fs');
+const [f,target,log]=process.argv.slice(2);
+const csv=MLR.parseCSV(fs.readFileSync(f,'utf8')),cols=MLR.describeColumns(csv);
+const D=MLR.buildDesign(csv,cols,target,log==='1');
+const t0=Date.now(),R=MLR.run(D,{logTarget:log==='1'});
+console.error('time ms',Date.now()-t0,'n',R.n,'p',R.p,'dropped',D.dropped, cols.filter(c=>c.kind==='dropped').map(c=>c.name+':'+c.reason));
+console.error('picks',JSON.stringify(R.picks,(k,v)=>typeof v==='number'?+v.toFixed(4):v));
+console.error('best',R.bestMethod,R.kSel,'evalSel',JSON.stringify(R.evalSel),'cov',R.coverage);
+const x0=D.X[R.test[0]],q=R.model.predict(x0);
+fs.writeFileSync('verify/js_out.json',JSON.stringify({X:D.X,y:D.y,names:D.featNames,train:R.train,sel:R.sel,coef:R.model.coef,vif:R.vif||R.model.vif,F:R.model.F,r2:R.model.r2,x0test:R.test[0],pred:q,log:log==='1'}));
